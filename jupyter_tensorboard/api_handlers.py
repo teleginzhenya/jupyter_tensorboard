@@ -41,8 +41,9 @@ class TbRootHandler(APIHandler):
         )
         self.finish(json.dumps({
                 'name': entry.name,
-                'logdir':  _trim_notebook_dir(entry.logdir),
-                'reload_time': entry.thread.reload_time}))
+                'logdir':  _trim_notebook_dir(entry.logdir)
+                # 'reload_time': entry.thread.reload_time
+                }))
 
 
 class TbInstanceHandler(APIHandler):

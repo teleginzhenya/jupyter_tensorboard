@@ -41,10 +41,18 @@ try:
                    ]
             tensorboard = program.TensorBoard()
             tensorboard.configure(argv)
-            return application.standard_tensorboard_wsgi(
+
+            if hasattr(application, "standard_tensorboard_wsgi"):
+                return application.standard_tensorboard_wsgi(
+                    tensorboard.flags,
+                    tensorboard.plugin_loaders,
+                    tensorboard.assets_zip_provider)
+
+            return application.TensorBoardWSGIApp(
                 tensorboard.flags,
                 tensorboard.plugin_loaders,
-                tensorboard.assets_zip_provider)
+                assets_zip_provider=tensorboard.assets_zip_provider)
+
     else:
         logging.debug("Tensorboard 0.4.x series detected")
 
@@ -136,27 +144,24 @@ def TensorBoardWSGIApp_2x(
         deprecated_multiplexer=None):
 
     logdir = flags.logdir
-    multiplexer = deprecated_multiplexer
-    reload_interval = flags.reload_interval
 
-    path_to_run = application.parse_event_files_spec(logdir)
-    if reload_interval:
-        thread = start_reloading_multiplexer(
-            multiplexer, path_to_run, reload_interval)
-    else:
-        application.reload_multiplexer(multiplexer, path_to_run)
-        thread = None
-
-    db_uri = None
-    db_connection_provider = None
+    # multiplexer = deprecated_multiplexer
+    # reload_interval = flags.reload_interval
+    #
+    # path_to_run = application.parse_event_files_spec(logdir)
+    # if reload_interval:
+    #     thread = start_reloading_multiplexer(
+    #         multiplexer, path_to_run, reload_interval)
+    # else:
+    #     application.reload_multiplexer(multiplexer, path_to_run)
+    #     thread = None
+    thread = None
 
     plugin_name_to_instance = {}
 
     from tensorboard.plugins import base_plugin
     context = base_plugin.TBContext(
         data_provider=data_provider,
-        db_connection_provider=db_connection_provider,
-        db_uri=db_uri,
         flags=flags,
         logdir=flags.logdir,
         multiplexer=deprecated_multiplexer,
