@@ -24,8 +24,8 @@ class TbRootHandler(APIHandler):
         terms = [
             {
                 'name': entry.name,
-                'logdir': _trim_notebook_dir(entry.logdir),
-                "reload_time": entry.thread.reload_time,
+                'logdir': _trim_notebook_dir(entry.logdir)
+                # 'reload_time': entry.thread.reload_time,
             } for entry in
             self.settings["tensorboard_manager"].values()
         ]
@@ -57,8 +57,9 @@ class TbInstanceHandler(APIHandler):
             entry = manager[name]
             self.finish(json.dumps({
                 'name': entry.name,
-                'logdir':  _trim_notebook_dir(entry.logdir),
-                'reload_time': entry.thread.reload_time}))
+                'logdir':  _trim_notebook_dir(entry.logdir)
+                # 'reload_time': entry.thread.reload_time
+            }))
         else:
             raise web.HTTPError(
                 404, "TensorBoard instance not found: %r" % name)
