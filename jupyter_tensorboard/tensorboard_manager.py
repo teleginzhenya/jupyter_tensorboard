@@ -48,11 +48,17 @@ try:
                     tensorboard.plugin_loaders,
                     tensorboard.assets_zip_provider)
 
+            # see https://github.com/tensorflow/tensorboard/commit/61df0809b16cc37a74cd1eebf9dd60163db17b04
+            from tensorboard.backend.event_processing.data_ingester import LocalDataIngester
+            ingester = LocalDataIngester(tensorboard.flags)
+            ingester.start()
             return application.TensorBoardWSGIApp(
                 tensorboard.flags,
                 tensorboard.plugin_loaders,
-                assets_zip_provider=tensorboard.assets_zip_provider)
-
+                ingester.data_provider,
+                assets_zip_provider=tensorboard.assets_zip_provider,
+                deprecated_multiplexer=ingester.deprecated_multiplexer
+            )
     else:
         logging.debug("Tensorboard 0.4.x series detected")
 
@@ -145,17 +151,20 @@ def TensorBoardWSGIApp_2x(
 
     logdir = flags.logdir
 
-    # multiplexer = deprecated_multiplexer
-    # reload_interval = flags.reload_interval
-    #
-    # path_to_run = application.parse_event_files_spec(logdir)
-    # if reload_interval:
-    #     thread = start_reloading_multiplexer(
-    #         multiplexer, path_to_run, reload_interval)
-    # else:
-    #     application.reload_multiplexer(multiplexer, path_to_run)
-    #     thread = None
-    thread = None
+    multiplexer = deprecated_multiplexer
+    reload_interval = flags.reload_interval
+
+    if not hasattr(application, 'parse_event_files_spec'):
+        from tensorboard.backend.event_processing.data_ingester import _parse_event_files_spec
+        application.parse_event_files_spec = _parse_event_files_spec
+
+    path_to_run = application.parse_event_files_spec(logdir)
+    if reload_interval:
+        thread = start_reloading_multiplexer(
+            multiplexer, path_to_run, reload_interval)
+    else:
+        application.reload_multiplexer(multiplexer, path_to_run)
+        thread = None
 
     plugin_name_to_instance = {}
 
