@@ -49,9 +49,7 @@ def load_jupyter_server_extension(nb_app):
 
 class TensorboardHandler(IPythonHandler):
 
-    @web.authenticated
-    def get(self, name, path):
-
+    def _handle_request(self, name, path):
         if path == "":
             uri = self.request.path + "/"
             if self.request.query:
@@ -69,6 +67,19 @@ class TensorboardHandler(IPythonHandler):
             WSGIContainer(tb_app)(self.request)
         else:
             raise web.HTTPError(404)
+
+    @web.authenticated
+    def get(self, name, path):
+        self._handle_request(name, path)
+
+    @web.authenticated
+    def post(self, name, path):
+        self._handle_request(name, path)
+
+    def check_xsrf_cookie(self):
+        if self.request.uri.startswith('/tensorboard'):
+            return
+        super(TensorboardHandler, self).check_xsrf_cookie()
 
 
 class TensorboardErrorHandler(IPythonHandler):
